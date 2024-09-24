@@ -28,15 +28,21 @@ const Login = () => {
                 body: JSON.stringify({ email, password }),
             });
 
-            if (!response.ok) {
+            // Jika respons ok, ambil token dan simpan
+            if (response.ok) {
+                const data = await response.json();
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('name', data.name); // Menyimpan nama ke localStorage
+                localStorage.setItem('email', data.email); // Simpan token ke localStorage
+                navigate('/todolist'); // Redirect ke todolist setelah login
+            } else {
+                // Tangani error jika respons tidak ok
                 const errorData = await response.json();
                 setError(errorData.message || 'Login failed');
-                return;
             }
 
-            navigate('/');
-
         } catch (err) {
+            // Tangani error yang mungkin terjadi
             setError('Something went wrong');
         }
     };
@@ -56,7 +62,7 @@ const Login = () => {
                     <LockOutlined />
                 </Avatar>
                 <Typography variant="h5">Login</Typography>
-                {error && <Typography color="error">{error}</Typography>} {}
+                {error && <Typography color="error">{error}</Typography>} { }
                 <Box sx={{ mt: 1 }}>
                     <TextField
                         margin="normal"
