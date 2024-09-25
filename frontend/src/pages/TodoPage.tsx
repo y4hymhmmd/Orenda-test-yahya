@@ -21,9 +21,12 @@ import {
     DialogActions,
     DialogContent,
     DialogTitle,
+    TextField,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import LogoutIcon from '@mui/icons-material/Logout';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 interface Todo {
     id: number;
@@ -34,20 +37,22 @@ interface Todo {
 const getInitials = (name: string) => {
     const nameParts = name.split(' ');
     if (nameParts.length === 1) {
-        return nameParts[0][0]; // Ambil huruf pertama jika hanya ada satu kata
+        return nameParts[0][0];
     }
-    return nameParts[0][0] + nameParts[1][0]; // Ambil dua huruf pertama dari dua kata
+    return nameParts[0][0] + nameParts[1][0];
 };
 
 const TodoList = () => {
     const [todos, setTodos] = useState<Todo[]>([]);
     const [open, setOpen] = useState(false);
+    const [newTodo, setNewTodo] = useState({ title: '', description: '' });
+    const [editId, setEditId] = useState<number | null>(null);
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const openProfileMenu = Boolean(anchorEl);
 
-    const userName = localStorage.getItem('name') || 'User'; // Ambil nama dari localStorage
-    const userEmail = localStorage.getItem('email') || 'email@example.com'; // Ambil email dari localStorage
-    const userInitials = getInitials(userName); // Dapatkan inisial nama
+    const userName = localStorage.getItem('name') || 'User';
+    const userEmail = localStorage.getItem('email') || 'email@example.com';
+    const userInitials = getInitials(userName);
 
     const fetchTodos = async () => {
         const response = await fetch('http://localhost:5000/api/todolist');
@@ -70,6 +75,43 @@ const TodoList = () => {
         window.location.href = '/login';
     };
 
+    const handleAddOrUpdateTodo = async () => {
+        if (editId) {
+            await fetch(`http://localhost:5000/api/todolist/${editId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(newTodo),
+            });
+        } else {
+            await fetch('http://localhost:5000/api/todolist', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(newTodo),
+            });
+        }
+        setOpen(false);
+        setNewTodo({ title: '', description: '' });
+        setEditId(null);
+        fetchTodos();
+    };
+
+    const handleEdit = (todo: Todo) => {
+        setNewTodo({ title: todo.title, description: todo.description });
+        setEditId(todo.id);
+        setOpen(true);
+    };
+
+    const handleDelete = async (id: number) => {
+        await fetch(`http://localhost:5000/api/todolist/${id}`, {
+            method: 'DELETE',
+        });
+        fetchTodos();
+    };
+
     useEffect(() => {
         fetchTodos();
     }, []);
@@ -87,7 +129,7 @@ const TodoList = () => {
                             Add
                         </Button>
                         <IconButton onClick={handleProfileMenuOpen} sx={{ ml: 2 }}>
-                            <Avatar>{userInitials}</Avatar> {/* Tampilkan inisial di Avatar */}
+                            <Avatar>{userInitials}</Avatar>
                         </IconButton>
                         <Menu
                             anchorEl={anchorEl}
@@ -116,10 +158,10 @@ const TodoList = () => {
                             anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
                         >
                             <MenuItem>
-                                <Typography variant="subtitle1">{userName}</Typography> {/* Nama dari localStorage */}
+                                <Typography variant="subtitle1">{userName}</Typography>
                             </MenuItem>
                             <MenuItem>
-                                <Typography variant="subtitle2">{userEmail}</Typography> {/* Email dari localStorage */}
+                                <Typography variant="subtitle2">{userEmail}</Typography>
                             </MenuItem>
                             <MenuItem onClick={handleLogout}>
                                 <LogoutIcon sx={{ mr: 1 }} />
@@ -130,13 +172,13 @@ const TodoList = () => {
                 </Toolbar>
             </AppBar>
 
-            {/* Render tabel Todo di sini */}
             <TableContainer sx={{ mt: 2 }}>
                 <Table>
                     <TableHead>
                         <TableRow>
                             <TableCell>Title</TableCell>
                             <TableCell>Description</TableCell>
+                            <TableCell>Actions</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
@@ -144,21 +186,44 @@ const TodoList = () => {
                             <TableRow key={todo.id}>
                                 <TableCell>{todo.title}</TableCell>
                                 <TableCell>{todo.description}</TableCell>
+                                <TableCell>
+                                    <IconButton onClick={() => handleEdit(todo)}>
+                                        <EditIcon />
+                                    </IconButton>
+                                    <IconButton color="error" onClick={() => handleDelete(todo.id)}>
+                                        <DeleteIcon />
+                                    </IconButton>
+                                </TableCell>
                             </TableRow>
                         ))}
                     </TableBody>
                 </Table>
             </TableContainer>
 
-            {/* Dialog for Add/Edit Todo */}
             <Dialog open={open} onClose={() => setOpen(false)}>
-                <DialogTitle>Add Todo</DialogTitle>
+                <DialogTitle>{editId ? 'Edit Todo' : 'Add Todo'}</DialogTitle>
                 <DialogContent>
-                    {/* Form untuk Add/Edit Todo */}
+                    <TextField
+                        autoFocus
+                        margin="dense"
+                        label="Title"
+                        fullWidth
+                        value={newTodo.title}
+                        onChange={(e) => setNewTodo({ ...newTodo, title: e.target.value })}
+                    />
+                    <TextField
+                        margin="dense"
+                        label="Description"
+                        fullWidth
+                        value={newTodo.description}
+                        onChange={(e) => setNewTodo({ ...newTodo, description: e.target.value })}
+                    />
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setOpen(false)}>Cancel</Button>
-                    <Button onClick={() => {/* Tambahkan logika add/edit todo di sini */}}>Add</Button>
+                    <Button onClick={handleAddOrUpdateTodo}>
+                        {editId ? 'Update' : 'Add'}
+                    </Button>
                 </DialogActions>
             </Dialog>
         </Container>

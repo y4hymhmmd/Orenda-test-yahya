@@ -28,21 +28,18 @@ const Login = () => {
                 body: JSON.stringify({ email, password }),
             });
 
-            // Jika respons ok, ambil token dan simpan
             if (response.ok) {
                 const data = await response.json();
                 localStorage.setItem('token', data.token);
-                localStorage.setItem('name', data.name); // Menyimpan nama ke localStorage
-                localStorage.setItem('email', data.email); // Simpan token ke localStorage
-                navigate('/todolist'); // Redirect ke todolist setelah login
+                localStorage.setItem('name', data.name);
+                localStorage.setItem('email', data.email);
+                navigate('/todolist');
             } else {
-                // Tangani error jika respons tidak ok
                 const errorData = await response.json();
                 setError(errorData.message || 'Login failed');
             }
 
         } catch (err) {
-            // Tangani error yang mungkin terjadi
             setError('Something went wrong');
         }
     };

@@ -8,7 +8,6 @@ interface PrivateRouteProps {
 const PrivateRoute = ({ children }: PrivateRouteProps) => {
     const token = localStorage.getItem('token');
 
-    // Kalau nggak ada token, redirect ke login
     return token ? children : <Navigate to="/login" />;
 };
 

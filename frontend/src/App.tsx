@@ -8,14 +8,9 @@ import PrivateRoute from './routes/PrivateRoute';
 const App = () => {
   return (
     <Routes>
-      {/* Redirect ke "/todolist" jika sudah login, atau ke "/login" kalau belum */}
       <Route path="/" element={<Navigate to="/todolist" />} />
-      
-      {/* Halaman login dan register tidak butuh proteksi */}
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
-      
-      {/* Halaman TodoList diproteksi oleh PrivateRoute */}
       <Route 
         path="/todolist" 
         element={
